@@ -1,4 +1,4 @@
-package com.github.codexdb.services;
+package com.example.codexdb.services;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
