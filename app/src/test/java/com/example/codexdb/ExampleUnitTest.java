@@ -1,4 +1,4 @@
-package com.example.codexdb;
+package com.github.codexdb;
 
 import org.junit.Test;
 

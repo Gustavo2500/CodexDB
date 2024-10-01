@@ -1,9 +1,7 @@
-package com.example.codexdb.services;
+package com.github.codexdb.services;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
