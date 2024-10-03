@@ -7,7 +7,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.example.codexdb.models.Bookshelf.BookEntry;
 
-
+/**
+ * Database handler class
+ */
 public class BookDBHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "Library.db";
@@ -20,6 +22,7 @@ public class BookDBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL("CREATE TABLE BOOKS ("
                 + BookEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + BookEntry.ISBN + " TEXT NOT NULL,"
                 + BookEntry.TITLE + " TEXT NOT NULL,"
                 + BookEntry.AUTHOR + " TEXT NOT NULL,"
                 + BookEntry.COVER + " BLOB)"
@@ -31,12 +34,21 @@ public class BookDBHelper extends SQLiteOpenHelper {
 
     }
 
-    public void addBook(String title, String author, byte[] image) {
+    /**
+     * Adds a book to the database
+     * @param ISBN
+     * @param title
+     * @param author       
+     * @param cover
+     */
+    public void addBook(String ISBN, String title, String author, byte[] cover) {
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
+        cv.put(BookEntry.ISBN, ISBN);
         cv.put(BookEntry.TITLE, title);
         cv.put(BookEntry.AUTHOR, author);
-        cv.put(BookEntry.COVER, new byte[]{});
+        cv.put(BookEntry.COVER, cover);
         database.insert(BookEntry.TABLE_NAME, null, cv);
+        database.close();
     }
 }
