@@ -3,11 +3,14 @@ plugins {
 }
 
 android {
-    namespace 'com.example.codexdb'
+    namespace 'com.github.codexdb'
     compileSdk 34
+    dataBinding{
+        enabled = true
+    }
 
     defaultConfig {
-        applicationId "com.example.codexdb"
+        applicationId "com.github.codexdb"
         minSdk 29
         targetSdk 34
         versionCode 1

@@ -1,9 +1,9 @@
-package com.example.codexdb.models;
+package com.github.codexdb.models;
 
 import android.provider.BaseColumns;
 
 /**
- * Book database scheme
+ * Book table structure
  */
 public class Bookshelf {
 

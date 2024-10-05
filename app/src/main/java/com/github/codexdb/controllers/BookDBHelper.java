@@ -1,11 +1,17 @@
-package com.example.codexdb.controllers;
+package com.github.codexdb.controllers;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
-import com.example.codexdb.models.Bookshelf.BookEntry;
+import com.github.codexdb.models.Book;
+import com.github.codexdb.models.Bookshelf.BookEntry;
+
+import java.util.ArrayList;
 
 /**
  * Database handler class
@@ -25,7 +31,8 @@ public class BookDBHelper extends SQLiteOpenHelper {
                 + BookEntry.ISBN + " TEXT NOT NULL,"
                 + BookEntry.TITLE + " TEXT NOT NULL,"
                 + BookEntry.AUTHOR + " TEXT NOT NULL,"
-                + BookEntry.COVER + " BLOB)"
+                + BookEntry.COVER + " BLOB NOT NULL,"
+                + "UNIQUE(" + BookEntry.ISBN + "))"
         );
     }
 
@@ -36,19 +43,57 @@ public class BookDBHelper extends SQLiteOpenHelper {
 
     /**
      * Adds a book to the database
-     * @param ISBN
-     * @param title
-     * @param author       
-     * @param cover
      */
-    public void addBook(String ISBN, String title, String author, byte[] cover) {
+    public long addBook(String ISBN, String title, String author, byte[] cover) {
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(BookEntry.ISBN, ISBN);
         cv.put(BookEntry.TITLE, title);
         cv.put(BookEntry.AUTHOR, author);
         cv.put(BookEntry.COVER, cover);
-        database.insert(BookEntry.TABLE_NAME, null, cv);
+        long res =  database.insert(BookEntry.TABLE_NAME, null, cv);
         database.close();
+        return res;
+    }
+
+    /**
+     * Deletes a book from the database
+     */
+    public void deleteBook(String ISBN) {
+        SQLiteDatabase database = this.getWritableDatabase();
+        database.delete(BookEntry.TABLE_NAME, "isbn = ?", new String[]{ISBN});
+        database.close();
+    }
+
+    /**
+     * Updates a book's information from the database
+     */
+    public void updateBook(String title, String author, String ISBN) {
+        SQLiteDatabase database = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(BookEntry.TITLE, title);
+        cv.put(BookEntry.AUTHOR, author);
+        database.update(BookEntry.TABLE_NAME, cv, "isbn = ?", new String[]{ISBN});
+        database.close();
+    }
+
+    @SuppressLint("Range")
+    public ArrayList<Book> readDatabase() {
+        SQLiteDatabase database = this.getReadableDatabase();
+        String sql = "SELECT * FROM BOOKS";
+        Cursor cursor = database.rawQuery(sql, new String[]{});
+        ArrayList<Book> bookList = new ArrayList<>();
+        while(cursor.moveToNext()) {
+            Book book = new Book();
+            book.setTitle(cursor.getString(cursor.getColumnIndex("title")));
+            book.setAuthor(cursor.getString(cursor.getColumnIndex("author")));
+            book.setISBN(cursor.getString(cursor.getColumnIndex("isbn")));
+            book.setCover(cursor.getBlob(cursor.getColumnIndex("cover")));
+            bookList.add(book);
+            Log.e("test1212", book.getTitle());
+        }
+        database.close();
+        cursor.close();
+        return bookList;
     }
 }

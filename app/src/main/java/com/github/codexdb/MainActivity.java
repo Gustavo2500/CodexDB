@@ -1,16 +1,8 @@
-package com.example.codexdb;
+package com.github.codexdb;
 
-import static com.example.codexdb.models.Bookshelf.BookEntry.AUTHOR;
-import static com.example.codexdb.models.Bookshelf.BookEntry.COVER;
-import static com.example.codexdb.models.Bookshelf.BookEntry.TABLE_NAME;
-import static com.example.codexdb.models.Bookshelf.BookEntry.TITLE;
-import static com.example.codexdb.models.Bookshelf.BookEntry.ID;
-
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 
@@ -21,27 +13,27 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.widget.PopupMenu;
 import androidx.navigation.ui.AppBarConfiguration;
 
-import com.example.codexdb.controllers.BookDBHelper;
-import com.example.codexdb.databinding.ActivityMainBinding;
-import com.example.codexdb.models.Book;
-import com.example.codexdb.services.RequestCreator;
+import com.github.codexdb.controllers.BookAdapter;
+import com.github.codexdb.controllers.BookDBHelper;
+import com.github.codexdb.databinding.ActivityMainBinding;
+import com.github.codexdb.models.Book;
+import com.github.codexdb.services.RequestCreator;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -62,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private final int READ_ERROR = 2;
     private final int CONNECTION_OK = 1;
     private BookDBHelper db;
+    private ArrayList<Book> bookList;
+    private BookAdapter bookAdapter;
 
 
     @Override
@@ -76,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton menuButton = findViewById(R.id.menuButton);
         PopupMenu popupMenu = new PopupMenu(MainActivity.this, menuButton);
         popupMenu.getMenuInflater().inflate(R.menu.menu_main, popupMenu.getMenu());
+
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -97,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         db = new BookDBHelper(this);
+        RecyclerView bookListRV = findViewById(R.id.bookList);
+        bookListRV.setHasFixedSize(true);
+        bookList = new ArrayList<Book>();
+        readBookTable();
+        LinearLayoutManager linearLayout = new LinearLayoutManager(MainActivity.this);
+        bookListRV.setLayoutManager(linearLayout);
+        bookAdapter = new BookAdapter(bookList);
+        bookListRV.setAdapter(bookAdapter);
     }
 
     /**
@@ -133,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private void startRequestProcess(IntentResult result) {
         String ISBN = result.getContents();
-        binding.scanResult.setText(result.getContents());
         ProgressDialog progress = new ProgressDialog(this);
         progress.setTitle("Loading...");
         progress.setMessage("Please wait...");
@@ -173,8 +175,8 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
         LayoutInflater factory = LayoutInflater.from(MainActivity.this);
         View view = factory.inflate(R.layout.dialog_add_book, null);
-        TextView bookTitle = view.findViewById(R.id.dialog_title);
-        TextView bookAuthor = view.findViewById(R.id.dialog_author);
+        TextView bookTitle = view.findViewById(R.id.edit_title_label);
+        TextView bookAuthor = view.findViewById(R.id.edit_author_label);
         bookTitle.setText("Book: " + bookData.get(0));
         bookAuthor.setText("Author: " + bookData.get(2));
         ImageView bookCover = view.findViewById(R.id.dialog_cover);
@@ -194,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
             .setTitle("Book scanned");
 
         dialog.show();
-
     }
 
     /**
@@ -202,8 +203,49 @@ public class MainActivity extends AppCompatActivity {
      * @param book  The book's information stored as a Book object
      */
     private void addBookToDB(Book book) {
-        db.addBook(book.getISBN(), book.getTitle(), book.getAuthor(), book.getCover());
-        SQLiteDatabase database = db.getWritableDatabase();
-        Toast.makeText(getApplicationContext(), "Book added.", Toast.LENGTH_LONG).show();
+        long res = db.addBook(book.getISBN(), book.getTitle(), book.getAuthor(), book.getCover());
+        if(res != -1) {
+            updateRecyclerView();
+            Toast.makeText(getApplicationContext(), "Book added.", Toast.LENGTH_LONG).show();
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "The book already exists.", Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    /**
+     * Deletes the book from the database
+     */
+    public void deleteBookFromDB(String ISBN) {
+        db.deleteBook(ISBN);
+        updateRecyclerView();
+        Toast.makeText(getApplicationContext(), "Book deleted.", Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Updates the book from the database
+     * @param book  The book's information stored as a Book object
+     */
+    public void updateBookFromDB(Book book) {
+        db.updateBook(book.getTitle(), book.getAuthor(), book.getISBN());
+        updateRecyclerView();
+        Toast.makeText(getApplicationContext(), "Book updated.", Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Reads the database and stores the books found
+     */
+    private void readBookTable() {
+        bookList = db.readDatabase();
+    }
+
+    /**
+     * Updates the book dataset and notifies the RecyclerView adapter to update the list of books
+     */
+    private void updateRecyclerView() {
+        readBookTable();
+        bookAdapter.setBookDataSet(bookList);
+        bookAdapter.notifyDataSetChanged();
     }
 }

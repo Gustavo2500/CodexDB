@@ -1,4 +1,4 @@
-package com.example.codexdb.models;
+package com.github.codexdb.models;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -73,7 +73,6 @@ public class Book {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         img.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         byte[] byteArray = stream.toByteArray();
-        img.recycle();
         return byteArray;
     }
 
