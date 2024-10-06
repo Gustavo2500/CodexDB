@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.github.codexdb.MainActivity">
     <item
-        android:id="@+id/delete"
-        android:title="Delete book" />
+        android:id="@+id/toPDF"
+        android:title="Export to PDF" />
 
 </menu>

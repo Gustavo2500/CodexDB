@@ -3,20 +3,31 @@ package com.github.codexdb;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
+import android.Manifest;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.ui.AppBarConfiguration;
 
 import com.github.codexdb.controllers.BookAdapter;
@@ -35,6 +46,10 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private BookDBHelper db;
     private ArrayList<Book> bookList;
     private BookAdapter bookAdapter;
+    private final int REQUEST_CODE = 200;
 
 
     @Override
@@ -74,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Toast.makeText(MainActivity.this, item.getTitle(), Toast.LENGTH_SHORT).show();
+                exportDialogue();
                 return true;
             }
         });
@@ -211,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
         else {
             Toast.makeText(getApplicationContext(), "The book already exists.", Toast.LENGTH_LONG).show();
         }
-
     }
 
     /**
@@ -247,5 +262,129 @@ public class MainActivity extends AppCompatActivity {
         readBookTable();
         bookAdapter.setBookDataSet(bookList);
         bookAdapter.notifyDataSetChanged();
+    }
+
+    private void exportDialogue() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        dialog.setTitle("Export list to PDF?");
+        dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    requestPermission();
+                }
+            })
+            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+
+                }
+            });
+        dialog.show();
+    }
+
+    private void requestPermission() {
+        int permissionCheck = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_PHONE_STATE)) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
+            }
+        }
+        else {
+            exportToPDF();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 200) {
+            if(hasAllPermissionsGranted(grantResults)) {
+                exportToPDF();
+            }
+            else {
+                Toast.makeText(MainActivity.this, "Permissions needed to create PDF", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public boolean hasAllPermissionsGranted(@NonNull int[] grantResults) {
+        for (int grantResult : grantResults) {
+            if (grantResult == PackageManager.PERMISSION_DENIED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    private void exportToPDF() {
+        PdfDocument doc = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 841, 1).create();
+        PdfDocument.Page page = doc.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+        Paint paint = new Paint();
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(30);
+        paint.setTextAlign(Paint.Align.LEFT);
+
+        String text = "";
+        float x = 50;
+        float y = 70;
+        canvas.drawText("CodexDB - List of books", x, y, paint);
+        paint.setTextSize(12);
+        y = 100;
+        int itemCount = 0;
+        PdfDocument.Page nextPage = null;
+        boolean multiplePages = false;
+        for (int i = 0; i < bookList.size(); i++) {
+            text = bookList.get(i).getISBN() + " - " + bookList.get(i).getTitle() + " - " + bookList.get(i).getAuthor();
+            if (itemCount < 45) {
+                canvas.drawText(text, x, y, paint);
+                y += 16;
+            } else {
+                if(!multiplePages) {
+                    doc.finishPage(page);
+                }
+                else {
+                    doc.finishPage(nextPage);
+                }
+                PdfDocument.PageInfo nextPageInfo = new PdfDocument.PageInfo.Builder(595, 841, 1).create();
+                nextPage = doc.startPage(nextPageInfo);
+                canvas = nextPage.getCanvas();
+                y = 70;
+                canvas.drawText(text, x, y, paint);
+                y += 16;
+                itemCount = 0;
+                multiplePages = true;
+            }
+            itemCount += 1;
+        }
+        if(!multiplePages) {
+            doc.finishPage(page);
+        }
+        else {
+            doc.finishPage(nextPage);
+        }
+        File saveDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        String fileName = "Book_list.pdf";
+        File pdf = new File(saveDir, fileName);
+        try {
+            int duplicateCount = 1;
+            while (pdf.exists()) {
+                pdf = new File(saveDir, "Book_list(" + duplicateCount + ").pdf");
+                duplicateCount += 1;
+            }
+            FileOutputStream fos = new FileOutputStream(pdf);
+            doc.writeTo(fos);
+            doc.close();
+            fos.close();
+            Toast.makeText(MainActivity.this, "PDF created on Downloads folder", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(MainActivity.this, "Error while creating PDF", Toast.LENGTH_LONG).show();
+            Log.e("test1212", "" + e);
+        }
+
     }
 }
