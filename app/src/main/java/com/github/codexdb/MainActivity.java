@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -47,7 +46,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -183,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays a dialogue with the received book information and gives the option to add the book to the database or cancel
+     * Displays a dialogue with the received book information and gives the option to add the book to the database or cancel.
      * @param bookData  The book's information received from the API
      * @param ISBN      The book's code scanned previously with scanCode()
      */
@@ -264,6 +262,9 @@ public class MainActivity extends AppCompatActivity {
         bookAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Creates a dialogue that asks the user if they want to export the database to a PDF file.
+     */
     private void exportDialogue() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
         dialog.setTitle("Export list to PDF?");
@@ -282,6 +283,9 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /**
+     * Checks if the app has storage write permissions and asks for them if not.
+     */
     private void requestPermission() {
         int permissionCheck = ContextCompat.checkSelfPermission(
                 this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -296,6 +300,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     *  Checks if the writing permissions were granted. Begins the database to PDF export process when granted.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -309,6 +316,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Checks if all of the premissions from a request were granted.
+     * @param grantResults  A list of permission status codes.
+     * @return              True if all permissions were granted. False if at least one wasn't granted.
+     */
     public boolean hasAllPermissionsGranted(@NonNull int[] grantResults) {
         for (int grantResult : grantResults) {
             if (grantResult == PackageManager.PERMISSION_DENIED) {
@@ -319,6 +331,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Initiates the process to export the database to a PDF file.
+     */
     private void exportToPDF() {
         PdfDocument doc = new PdfDocument();
         PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 841, 1).create();
@@ -328,22 +343,41 @@ public class MainActivity extends AppCompatActivity {
         paint.setColor(Color.BLACK);
         paint.setTextSize(30);
         paint.setTextAlign(Paint.Align.LEFT);
+        doc = writeToPDF(canvas, doc, paint, page);
+        savePDF(doc);
+    }
 
+    /**
+     * Writes the contents of the list of Books received from the database into the PDF document.
+     * @param canvas    The canvas used to paint the text.
+     * @param doc       The document to write into.
+     * @param paint     Contains the style and settings of the text to paint.
+     * @param page      The first page of the document.
+     * @return
+     */
+    private PdfDocument writeToPDF(Canvas canvas, PdfDocument doc, Paint paint, PdfDocument.Page page) {
         String text = "";
         float x = 50;
         float y = 70;
-        canvas.drawText("CodexDB - List of books", x, y, paint);
+        canvas.drawText("CodexDB - List of books", x, y, paint); //Title of the document
         paint.setTextSize(12);
-        y = 100;
+        y = 100; //Adds some space between the title and the next line of text
         int itemCount = 0;
         PdfDocument.Page nextPage = null;
         boolean multiplePages = false;
+        /*
+            Loop used to write the Books information into the document.
+            Writes up to 45 entries per page. Checks with an item counter how many Books have been written.
+            If the limit is reached, a new page is created.
+         */
         for (int i = 0; i < bookList.size(); i++) {
             text = bookList.get(i).getISBN() + " - " + bookList.get(i).getTitle() + " - " + bookList.get(i).getAuthor();
+            //Checks if the limit per page has been reached.
             if (itemCount < 45) {
                 canvas.drawText(text, x, y, paint);
                 y += 16;
             } else {
+                //Finishes the first page after reaching the limit. Finishes the next pages added after the first iteration.
                 if(!multiplePages) {
                     doc.finishPage(page);
                 }
@@ -361,17 +395,30 @@ public class MainActivity extends AppCompatActivity {
             }
             itemCount += 1;
         }
+        //Checks if the document has more than one page and finishes the correct page.
         if(!multiplePages) {
             doc.finishPage(page);
         }
         else {
             doc.finishPage(nextPage);
         }
+        return doc;
+    }
+
+    /**
+     * Saves the PDF document into the storage Download directory.
+     * @param doc   The PDF document to save.
+     */
+    private void savePDF(PdfDocument doc) {
         File saveDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         String fileName = "Book_list.pdf";
         File pdf = new File(saveDir, fileName);
         try {
             int duplicateCount = 1;
+            /*
+                Checks if the file already exists and adds a number at the end of its name. If a file
+                with a number already exists, the number increases until finding a name that doesn't exist.
+             */
             while (pdf.exists()) {
                 pdf = new File(saveDir, "Book_list(" + duplicateCount + ").pdf");
                 duplicateCount += 1;
@@ -383,8 +430,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "PDF created on Downloads folder", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             Toast.makeText(MainActivity.this, "Error while creating PDF", Toast.LENGTH_LONG).show();
-            Log.e("test1212", "" + e);
         }
-
     }
 }

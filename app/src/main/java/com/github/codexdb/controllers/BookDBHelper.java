@@ -6,7 +6,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import com.github.codexdb.models.Book;
 import com.github.codexdb.models.Bookshelf.BookEntry;
@@ -77,6 +76,10 @@ public class BookDBHelper extends SQLiteOpenHelper {
         database.close();
     }
 
+    /**
+     * Creates a query that reads the contents of the BOOKS table from the database.
+     * @return  An ArrayList with Book objects that contain each book's information.
+     */
     @SuppressLint("Range")
     public ArrayList<Book> readDatabase() {
         SQLiteDatabase database = this.getReadableDatabase();
@@ -90,7 +93,6 @@ public class BookDBHelper extends SQLiteOpenHelper {
             book.setISBN(cursor.getString(cursor.getColumnIndex("isbn")));
             book.setCover(cursor.getBlob(cursor.getColumnIndex("cover")));
             bookList.add(book);
-            Log.e("test1212", book.getTitle());
         }
         database.close();
         cursor.close();

@@ -5,7 +5,6 @@ import static com.github.codexdb.models.Book.bytesToBitmap;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,10 +29,16 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
 
     private ArrayList<Book> bookDataSet;
 
+    /**
+     * Adds the book intormation into the dataset.
+     */
     public void setBookDataSet(ArrayList<Book> data) {
         bookDataSet = data;
     }
 
+    /**
+     * ViewHolder class with constructor.
+     */
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ImageView itemCover;
@@ -66,19 +71,35 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         }
     }
 
+    /**
+     * Adapter constructor.
+     * @param dataSet   ArrayList with the information of each book.
+     */
     public BookAdapter(ArrayList<Book> dataSet) {
         this.bookDataSet = dataSet;
     }
 
+    /**
+     * Creates the ViewHolder.
+     * @param parent The ViewGroup into which the new View will be added after it is bound to
+     *               an adapter position.
+     * @param viewType The view type of the new View.
+     *
+     * @return
+     */
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.book_row_item, parent, false);
-        RelativeLayout layout = view.findViewById(R.id.item_layout);
-        //layout.getBackground().setAlpha(30);
         return new ViewHolder(view);
     }
 
+    /**
+     * Writes the dataset information into the View. Adds a long click listener to each component of the view.
+     * @param holder The ViewHolder which should be updated to represent the contents of the
+     *        item at the given position in the data set.
+     * @param position The position of the item within the adapter's data set.
+     */
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.getItemCover().setImageBitmap(bytesToBitmap((bookDataSet.get(position).getCover())));
@@ -98,6 +119,10 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         });
     }
 
+    /**
+     * Creates a dialogue with the options to edit or delete a book.
+     * @param book  The information of the book selected in the RecyclerView list.
+     */
     private void settingsDialogue(Context context, Book book) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Book settings");
@@ -132,6 +157,10 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         builder.create().show();
     }
 
+    /**
+     * Creates a dialogue with editing fields for the title and author of the book.
+     * @param book  The information of the book selected in the RecyclerView list.
+     */
     private void editDialogue(Context context, Book book) {
         AlertDialog.Builder dialog = new AlertDialog.Builder(context);
         LayoutInflater factory = LayoutInflater.from(context);
@@ -165,6 +194,10 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
     }
 
 
+    /**
+     *
+     * @return  The current size of the dataset.
+     */
     @Override
     public int getItemCount() {
         return bookDataSet.size();

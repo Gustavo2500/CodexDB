@@ -27,6 +27,12 @@ public class  RequestCreator {
     private String authorName = "";
     private Bitmap bookCover;
 
+    /**
+     * Starts the process to request data from the API
+     * @param urlAPI        The URL of the API.
+     * @param methodType    The type of request method.
+     * @return              An integer code that determines the result of the request.
+     */
     public int sendRequest(String urlAPI, String methodType) {
         setConnection(urlAPI, methodType);
         resultCode = requestBookData();
@@ -34,6 +40,11 @@ public class  RequestCreator {
         return resultCode;
     }
 
+    /**
+     * Sets the information needed for the request into the class variables.
+     * @param urlAPI        The URL of the API.
+     * @param methodType    The type of request method.
+     */
     private void setConnection(String urlAPI, String methodType) {
         try {
             this.url = new URL(urlAPI);
@@ -43,6 +54,10 @@ public class  RequestCreator {
         this.method = methodType;
     }
 
+    /**
+     * Requests the data of the book.
+     * @return  An integer code that determines the result of the request.
+     */
     private int requestBookData() {
         try {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -69,6 +84,9 @@ public class  RequestCreator {
         return resultCode;
     }
 
+    /**
+     *  Formats the data received from the request to the API.
+     */
     private int formatBookData(InputStream inputStream) {
         InputStream in = inputStream;
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -101,6 +119,10 @@ public class  RequestCreator {
         }
     }
 
+    /**
+     * Makes a request for the author's data.
+     * @param authorKey OpenLibrary API code for authors.
+     */
     private void getAuthor(String authorKey) {
         try{
             HttpURLConnection conn = (HttpURLConnection) new URL("https://openlibrary.org/authors/" + authorKey + ".json").openConnection();
@@ -138,6 +160,10 @@ public class  RequestCreator {
         }
     }
 
+    /**
+     * Downloads the image of the book's cover and turns it into a Bitmap.
+     * @param url   The URL of the image.
+     */
     private void getBookCover(String url) {
         try {
             bookCover = BitmapFactory.decodeStream((InputStream)new URL(url).getContent());
@@ -148,6 +174,9 @@ public class  RequestCreator {
         }
     }
 
+    /**
+     * Resets all of the RequestCreator's values for a new request.
+     */
     public void resetRequest() {
         url = null;
         method = null;
@@ -160,6 +189,10 @@ public class  RequestCreator {
         return resultCode;
     }
 
+    /**
+     *
+     * @return  An ArrayList with each data field of the book.
+     */
     public ArrayList<Object> getBookData() {
         ArrayList<Object> data = new ArrayList<Object>();
         data.add(bookName);
