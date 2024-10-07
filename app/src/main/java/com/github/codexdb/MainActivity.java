@@ -43,6 +43,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -55,7 +56,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final RequestCreator request = new RequestCreator();
+    private RequestCreator request;
     private final int NOT_FOUND_ERROR = 4;
     private final int IO_CONNECTION_ERROR = 5;
     private final int DEFAULT_ERROR = 0;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        request = new RequestCreator(MainActivity.this);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ImageButton addButton = findViewById(R.id.addButton);
@@ -94,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
         readBookTable();
         LinearLayoutManager linearLayout = new LinearLayoutManager(MainActivity.this);
         bookListRV.setLayoutManager(linearLayout);
+        DividerItemDecoration divider = new DividerItemDecoration(bookListRV.getContext(), linearLayout.getOrientation());
+        bookListRV.addItemDecoration(divider);
         bookAdapter = new BookAdapter(bookList);
         bookListRV.setAdapter(bookAdapter);
     }
@@ -173,8 +177,8 @@ public class MainActivity extends AppCompatActivity {
         View view = factory.inflate(R.layout.dialog_add_book, null);
         TextView bookTitle = view.findViewById(R.id.edit_title_label);
         TextView bookAuthor = view.findViewById(R.id.edit_author_label);
-        bookTitle.setText(R.string.book_label + bookData.get(0).toString());
-        bookAuthor.setText(R.string.author_label + bookData.get(2).toString());
+        bookTitle.setText("Book: " + bookData.get(0));
+        bookAuthor.setText("Author: " + bookData.get(2));
         ImageView bookCover = view.findViewById(R.id.dialog_cover);
         bookCover.setImageBitmap(Bitmap.createScaledBitmap((Bitmap)bookData.get(3), 210, 360, false));
         dialog.setView(view)
@@ -304,16 +308,21 @@ public class MainActivity extends AppCompatActivity {
      * Initiates the process to export the database to a PDF file.
      */
     private void exportToPDF() {
-        PdfDocument doc = new PdfDocument();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 841, 1).create();
-        PdfDocument.Page page = doc.startPage(pageInfo);
-        Canvas canvas = page.getCanvas();
-        Paint paint = new Paint();
-        paint.setColor(Color.BLACK);
-        paint.setTextSize(30);
-        paint.setTextAlign(Paint.Align.LEFT);
-        doc = writeToPDF(canvas, doc, paint, page);
-        savePDF(doc);
+        if(bookList.size() == 0) {
+            Toast.makeText(MainActivity.this, "There are no books to export", Toast.LENGTH_LONG).show();
+        }
+        else {
+            PdfDocument doc = new PdfDocument();
+            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 841, 1).create();
+            PdfDocument.Page page = doc.startPage(pageInfo);
+            Canvas canvas = page.getCanvas();
+            Paint paint = new Paint();
+            paint.setColor(Color.BLACK);
+            paint.setTextSize(30);
+            paint.setTextAlign(Paint.Align.LEFT);
+            doc = writeToPDF(canvas, doc, paint, page);
+            savePDF(doc);
+        }
     }
 
     /**
@@ -328,8 +337,12 @@ public class MainActivity extends AppCompatActivity {
         String text;
         float x = 50;
         float y = 70;
-        canvas.drawText("CodexDB - List of books", x, y, paint); //Title of the document
+        canvas.drawText("List of books", x, y, paint); //Title of the document
+        paint.setTextSize(17);
+        paint.setColor(Color.LTGRAY);
+        canvas.drawText("CodexDB", 230, y, paint);
         paint.setTextSize(12);
+        paint.setColor(Color.BLACK);
         y = 100; //Adds some space between the title and the next line of text
         int itemCount = 0;
         PdfDocument.Page nextPage = null;

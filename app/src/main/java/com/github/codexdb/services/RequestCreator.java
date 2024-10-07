@@ -1,7 +1,10 @@
 package com.github.codexdb.services;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import com.github.codexdb.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,6 +29,11 @@ public class  RequestCreator {
     private String bookKey;
     private String authorName = "";
     private Bitmap bookCover;
+    private Context context;
+
+    public RequestCreator(Context context) {
+        this.context = context;
+    }
 
     /**
      * Starts the process to request data from the API
@@ -164,6 +172,7 @@ public class  RequestCreator {
         try {
             bookCover = BitmapFactory.decodeStream((InputStream)new URL(url).getContent());
         } catch (IOException e) {
+            bookCover = BitmapFactory.decodeResource(context.getResources(), R.drawable.no_cover);
             resultCode = 2;
         }
     }

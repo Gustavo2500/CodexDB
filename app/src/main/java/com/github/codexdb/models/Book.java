@@ -71,6 +71,7 @@ public class Book {
      */
     private byte[] bitmapToBytes(Bitmap img) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        img = Bitmap.createScaledBitmap(img, 42, 72, false);
         img.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         byte[] byteArray = stream.toByteArray();
         return byteArray;
