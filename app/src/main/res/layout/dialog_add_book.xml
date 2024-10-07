@@ -17,12 +17,12 @@
         android:id="@+id/edit_title_label"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:hint="Book title" />
+        android:hint="@string/book_title_label" />
 
     <TextView
         android:id="@+id/edit_author_label"
         android:layout_width="199dp"
         android:layout_height="wrap_content"
-        android:hint="Author name" />
+        android:hint="@string/book_author_label" />
 
 </LinearLayout>

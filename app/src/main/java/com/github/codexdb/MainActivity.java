@@ -1,5 +1,6 @@
 package com.github.codexdb;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -54,11 +55,6 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding;
-    private String bookName = null;
-    private String bookKey = null;
-    private int resultCode = 0;
     private final RequestCreator request = new RequestCreator();
     private final int NOT_FOUND_ERROR = 4;
     private final int IO_CONNECTION_ERROR = 5;
@@ -69,14 +65,13 @@ public class MainActivity extends AppCompatActivity {
     private BookDBHelper db;
     private ArrayList<Book> bookList;
     private BookAdapter bookAdapter;
-    private final int REQUEST_CODE = 200;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,30 +80,17 @@ public class MainActivity extends AppCompatActivity {
         PopupMenu popupMenu = new PopupMenu(MainActivity.this, menuButton);
         popupMenu.getMenuInflater().inflate(R.menu.menu_main, popupMenu.getMenu());
 
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                exportDialogue();
-                return true;
-            }
+        popupMenu.setOnMenuItemClickListener(item -> {
+            exportDialogue();
+            return true;
         });
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                scanCode();
-            }
-        });
-        menuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                popupMenu.show();
-            }
-        });
+        addButton.setOnClickListener(view -> scanCode());
+        menuButton.setOnClickListener(view -> popupMenu.show());
 
         db = new BookDBHelper(this);
         RecyclerView bookListRV = findViewById(R.id.bookList);
         bookListRV.setHasFixedSize(true);
-        bookList = new ArrayList<Book>();
+        bookList = new ArrayList<>();
         readBookTable();
         LinearLayoutManager linearLayout = new LinearLayoutManager(MainActivity.this);
         bookListRV.setLayoutManager(linearLayout);
@@ -133,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         if(data != null && resultCode != RESULT_CANCELED) {
             IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
             if (result != null) {
-                if (result.getContents() != null && resultCode != RESULT_CANCELED) {
+                if (result.getContents() != null) {
                     startRequestProcess(result);
                 } else {
                     Toast.makeText(getApplicationContext(), "Scan cancelled.", Toast.LENGTH_LONG).show();
@@ -191,22 +173,16 @@ public class MainActivity extends AppCompatActivity {
         View view = factory.inflate(R.layout.dialog_add_book, null);
         TextView bookTitle = view.findViewById(R.id.edit_title_label);
         TextView bookAuthor = view.findViewById(R.id.edit_author_label);
-        bookTitle.setText("Book: " + bookData.get(0));
-        bookAuthor.setText("Author: " + bookData.get(2));
+        bookTitle.setText(R.string.book_label + bookData.get(0).toString());
+        bookAuthor.setText(R.string.author_label + bookData.get(2).toString());
         ImageView bookCover = view.findViewById(R.id.dialog_cover);
         bookCover.setImageBitmap(Bitmap.createScaledBitmap((Bitmap)bookData.get(3), 210, 360, false));
         dialog.setView(view)
-            .setPositiveButton("Add", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    Book book = new Book(ISBN, bookData.get(0).toString(), bookData.get(2).toString(), (Bitmap)bookData.get(3));
-                    addBookToDB(book);
-                }
+            .setPositiveButton("Add", (dialog1, id) -> {
+                Book book = new Book(ISBN, bookData.get(0).toString(), bookData.get(2).toString(), (Bitmap)bookData.get(3));
+                addBookToDB(book);
             })
-            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    Toast.makeText(getApplicationContext(), "Cancelled.", Toast.LENGTH_LONG).show();
-                }
-            })
+            .setNegativeButton("Cancel", (dialog12, id) -> Toast.makeText(getApplicationContext(), "Cancelled.", Toast.LENGTH_LONG).show())
             .setTitle("Book scanned");
 
         dialog.show();
@@ -256,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Updates the book dataset and notifies the RecyclerView adapter to update the list of books
      */
+    @SuppressLint("NotifyDataSetChanged")
     private void updateRecyclerView() {
         readBookTable();
         bookAdapter.setBookDataSet(bookList);
@@ -268,17 +245,9 @@ public class MainActivity extends AppCompatActivity {
     private void exportDialogue() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
         dialog.setTitle("Export list to PDF?");
-        dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    requestPermission();
-                }
-            })
-            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
+        dialog.setPositiveButton("Yes", (dialogInterface, i) -> requestPermission())
+            .setNegativeButton("No", (dialogInterface, i) -> {
 
-                }
             });
         dialog.show();
     }
@@ -292,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
             if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.READ_PHONE_STATE)) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 200);
             }
         }
         else {
@@ -353,10 +322,10 @@ public class MainActivity extends AppCompatActivity {
      * @param doc       The document to write into.
      * @param paint     Contains the style and settings of the text to paint.
      * @param page      The first page of the document.
-     * @return
+     * @return          The PDF document.
      */
     private PdfDocument writeToPDF(Canvas canvas, PdfDocument doc, Paint paint, PdfDocument.Page page) {
-        String text = "";
+        String text;
         float x = 50;
         float y = 70;
         canvas.drawText("CodexDB - List of books", x, y, paint); //Title of the document

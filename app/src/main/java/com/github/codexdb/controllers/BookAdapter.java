@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -85,7 +84,7 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
      *               an adapter position.
      * @param viewType The view type of the new View.
      *
-     * @return
+     * @return      The ViewHolder created.
      */
     @NonNull
     @Override
@@ -106,16 +105,13 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         holder.getItemTitle().setText(bookDataSet.get(position).getTitle());
         holder.getItemAuthor().setText(bookDataSet.get(position).getAuthor());
         holder.getItemISBN().setText(bookDataSet.get(position).getISBN());
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Book book = new Book(((TextView)v.findViewById(R.id.item_isbn)).getText().toString(),
-                        ((TextView)v.findViewById(R.id.item_title)).getText().toString(),
-                        ((TextView)v.findViewById(R.id.item_author)).getText().toString(),
-                        ((BitmapDrawable)(((ImageView)v.findViewById(R.id.item_cover)).getDrawable())).getBitmap());
-                settingsDialogue(v.getContext(), book);
-                return false;
-            }
+        holder.itemView.setOnLongClickListener(v -> {
+            Book book = new Book(((TextView)v.findViewById(R.id.item_isbn)).getText().toString(),
+                    ((TextView)v.findViewById(R.id.item_title)).getText().toString(),
+                    ((TextView)v.findViewById(R.id.item_author)).getText().toString(),
+                    ((BitmapDrawable)(((ImageView)v.findViewById(R.id.item_cover)).getDrawable())).getBitmap());
+            settingsDialogue(v.getContext(), book);
+            return false;
         });
     }
 
@@ -127,33 +123,19 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Book settings");
         //builder.setMessage("test");
-        builder.setPositiveButton("Edit", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
-                        editDialogue(context, book);
-                        dialog.cancel();
-                    }
-                })
-            .setNeutralButton("Cancel", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
-                        dialog.cancel();
-                    }
-                })
-            .setNegativeButton("Delete", new DialogInterface.OnClickListener()
-                {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
-                        if(context instanceof MainActivity){
+        builder.setPositiveButton("Edit", (dialog, id) -> {
+            editDialogue(context, book);
+            dialog.cancel();
+        })
+            .setNeutralButton("Cancel", (dialog, id) -> dialog.cancel())
+            .setNegativeButton("Delete", (dialog, id) -> {
+                if(context instanceof MainActivity){
 
-                            MainActivity activity = (MainActivity)context;
-                            activity.deleteBookFromDB(book.getISBN());
-                        }
-                        dialog.cancel();
-                    }
-                });
+                    MainActivity activity = (MainActivity)context;
+                    activity.deleteBookFromDB(book.getISBN());
+                }
+                dialog.cancel();
+            });
         builder.create().show();
     }
 
@@ -170,24 +152,18 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> {
         bookTitle.setText(book.getTitle());
         bookAuthor.setText(book.getAuthor());
         dialog.setView(view)
-                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if(context instanceof MainActivity){
-                            book.setTitle(bookTitle.getText().toString());
-                            book.setAuthor(bookAuthor.getText().toString());
-                            MainActivity activity = (MainActivity)context;
-                            activity.updateBookFromDB(book);
-                        }
-                        else{
-                            Toast.makeText(context, "Book could not be updated.", Toast.LENGTH_LONG).show();
-                        }
+                .setPositiveButton("Confirm", (dialog1, id) -> {
+                    if(context instanceof MainActivity){
+                        book.setTitle(bookTitle.getText().toString());
+                        book.setAuthor(bookAuthor.getText().toString());
+                        MainActivity activity = (MainActivity)context;
+                        activity.updateBookFromDB(book);
+                    }
+                    else{
+                        Toast.makeText(context, "Book could not be updated.", Toast.LENGTH_LONG).show();
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                })
+                .setNegativeButton("Cancel", (dialog12, id) -> dialog12.cancel())
                 .setTitle("Book scanned");
 
         dialog.show();

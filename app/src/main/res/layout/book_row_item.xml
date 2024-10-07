@@ -53,7 +53,7 @@
         android:layout_marginEnd="11dp"
         android:gravity="right"
         android:maxLines="1"
-        android:text="ISBN:"
+        android:text="@string/isbn_label"
         android:textColor="@color/lightText"
         android:textSize="12sp" />
 

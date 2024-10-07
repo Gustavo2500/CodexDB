@@ -33,11 +33,10 @@ public class  RequestCreator {
      * @param methodType    The type of request method.
      * @return              An integer code that determines the result of the request.
      */
-    public int sendRequest(String urlAPI, String methodType) {
+    public void sendRequest(String urlAPI, String methodType) {
         setConnection(urlAPI, methodType);
         resultCode = requestBookData();
         getBookCover("https://covers.openlibrary.org/b/olid/" + bookKey + ".jpg");
-        return resultCode;
     }
 
     /**
@@ -49,7 +48,7 @@ public class  RequestCreator {
         try {
             this.url = new URL(urlAPI);
         } catch (MalformedURLException e) {
-
+            resultCode = 4;
         }
         this.method = methodType;
     }
@@ -88,8 +87,7 @@ public class  RequestCreator {
      *  Formats the data received from the request to the API.
      */
     private int formatBookData(InputStream inputStream) {
-        InputStream in = inputStream;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder result = new StringBuilder();
         String line;
         try{
@@ -141,9 +139,7 @@ public class  RequestCreator {
                     }
                     JSONObject retObj = new JSONObject(result.toString());
                     authorName = retObj.getString("name");
-                }catch(IOException e){
-                    authorName = "Not found";
-                } catch (JSONException e) {
+                }catch(IOException | JSONException e){
                     authorName = "Not found";
                 }
 
@@ -167,8 +163,6 @@ public class  RequestCreator {
     private void getBookCover(String url) {
         try {
             bookCover = BitmapFactory.decodeStream((InputStream)new URL(url).getContent());
-        } catch (MalformedURLException e) {
-            resultCode = 2;
         } catch (IOException e) {
             resultCode = 2;
         }
@@ -194,7 +188,7 @@ public class  RequestCreator {
      * @return  An ArrayList with each data field of the book.
      */
     public ArrayList<Object> getBookData() {
-        ArrayList<Object> data = new ArrayList<Object>();
+        ArrayList<Object> data = new ArrayList<>();
         data.add(bookName);
         data.add(bookKey);
         data.add(authorName);

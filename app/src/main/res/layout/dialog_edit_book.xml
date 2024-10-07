@@ -10,30 +10,28 @@
         android:id="@+id/edit_title_label"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:hint="Book title"
-        android:text="Book title:" />
+        android:text="@string/book_title_label" />
 
     <EditText
         android:id="@+id/edit_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="Title"
+        android:hint="@string/editText_title_label"
         android:inputType="text" />
 
     <TextView
         android:id="@+id/edit_author_label"
         android:layout_width="199dp"
         android:layout_height="wrap_content"
-        android:hint="Author name"
-        android:text="Author name:" />
+        android:text="@string/book_author_label" />
 
     <EditText
         android:id="@+id/edit_author"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="Author"
+        android:hint="@string/editText_author_label"
         android:inputType="text" />
 
 </LinearLayout>
