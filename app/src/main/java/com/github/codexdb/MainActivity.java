@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
+import android.os.Build;
 import android.os.Bundle;
 import android.Manifest;
 
@@ -260,12 +261,17 @@ public class MainActivity extends AppCompatActivity {
      * Checks if the app has storage write permissions and asks for them if not.
      */
     private void requestPermission() {
-        int permissionCheck = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_PHONE_STATE)) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 200);
+        if(Build.VERSION.SDK_INT <= 28) {
+            int permissionCheck = ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.READ_PHONE_STATE)) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 200);
+                }
+            }
+            else {
+                exportToPDF();
             }
         }
         else {
@@ -308,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
      * Initiates the process to export the database to a PDF file.
      */
     private void exportToPDF() {
-        if(bookList.size() == 0) {
+        if(bookList.isEmpty()) {
             Toast.makeText(MainActivity.this, "There are no books to export", Toast.LENGTH_LONG).show();
         }
         else {
