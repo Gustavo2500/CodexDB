@@ -5,4 +5,5 @@
     <color name="toolbarBg">#f77e50</color>
     <color name="transparent">#00000000</color>
     <color name="lightText">#999999</color>
+    <color name="secondary_toolbar">#F4D4CD</color>
 </resources>

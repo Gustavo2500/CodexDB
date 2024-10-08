@@ -12,4 +12,16 @@
     <string name="book_author_label">Author name:</string>
     <string name="editText_title_label">Title</string>
     <string name="editText_author_label">Author</string>
+    <string name="sort_list">Sort list</string>
+    <string name="sort_default">Default sort</string>
+    <string name="sort_title_desc">Sort by title (desc.)</string>
+    <string name="sort_author_desc">Sort by author (desc.)</string>
+    <string name="sort_title_asc">Sort by title (asc.)</string>
+    <string name="sort_auhtor_asc">Sort by author (asc.)</string>
+
+    <string name="sort_default_menu">No sorting</string>
+    <string name="sort_title_desc_menu">Sort by title (desc.)</string>
+    <string name="sort_auhtor_desc_menu">Sort by author (desc.)</string>
+    <string name="sort_title_asc_menu">Sort by title (asc.)</string>
+    <string name="sort_auhtor_asc_menu">Sort by author (asc.)</string>
 </resources>

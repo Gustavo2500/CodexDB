@@ -1,0 +1,21 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.github.codexdb.MainActivity">
+    <item
+        android:id="@+id/menu_default_sort"
+        android:title="@string/sort_default_menu" />
+    <item
+        android:id="@+id/menu_title_desc_sort"
+        android:title="@string/sort_title_desc_menu" />
+    <item
+        android:id="@+id/menu_title_asc_sort"
+        android:title="@string/sort_title_asc_menu" />
+    <item
+        android:id="@+id/menu_author_desc_sort"
+        android:title="@string/sort_auhtor_desc_menu" />
+    <item
+        android:id="@+id/menu_author_asc_sort"
+        android:title="@string/sort_auhtor_asc_menu" />
+
+</menu>

@@ -2,7 +2,6 @@ package com.github.codexdb;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -22,14 +21,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PersistableBundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.navigation.ui.AppBarConfiguration;
 
 import com.github.codexdb.controllers.BookAdapter;
 import com.github.codexdb.controllers.BookDBHelper;
@@ -52,6 +50,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private BookDBHelper db;
     private ArrayList<Book> bookList;
     private BookAdapter bookAdapter;
+    private int sortingCode = 0;
 
 
     @Override
@@ -89,6 +90,38 @@ public class MainActivity extends AppCompatActivity {
         });
         addButton.setOnClickListener(view -> scanCode());
         menuButton.setOnClickListener(view -> popupMenu.show());
+        ImageButton sortButton = findViewById(R.id.sort_icon);
+        PopupMenu popupMenuSort = new PopupMenu(MainActivity.this, sortButton);
+        popupMenuSort.getMenuInflater().inflate(R.menu.menu_sort, popupMenuSort.getMenu());
+
+        popupMenuSort.setOnMenuItemClickListener(item -> {
+            if(bookList.isEmpty()) {
+                Toast.makeText(MainActivity.this, "There are no books to sort", Toast.LENGTH_LONG).show();
+            }
+            else {
+                switch(item.getTitle().toString()) {
+                    case "No sorting":
+                        readBookTable();
+                        bookAdapter.setBookDataSet(bookList);
+                        bookAdapter.notifyDataSetChanged();
+                        sortingCode = 0;
+                        ((TextView)findViewById(R.id.sort_method)).setText("Default sort");
+                        break;
+                    case "Sort by title (desc.)": sortBooks("title", false);
+                        break;
+                    case "Sort by author (desc.)": sortBooks("author", false);
+                        break;
+                    case "Sort by title (asc.)": sortBooks("title", true);
+                        break;
+                    case "Sort by author (asc.)": sortBooks("author", true);
+                        break;
+
+                }
+            }
+
+            return true;
+        });
+        sortButton.setOnClickListener(view -> popupMenuSort.show());
 
         db = new BookDBHelper(this);
         RecyclerView bookListRV = findViewById(R.id.bookList);
@@ -114,6 +147,49 @@ public class MainActivity extends AppCompatActivity {
                 .setBeepEnabled(true)
                 .initiateScan();
     }
+
+    /**
+     * Sorts the book list depending on the parameters.
+     * @param type      The type of sorting method: by title or by author.
+     * @param inverse   If the sort is in ascending order or not.
+     */
+    private void sortBooks(String type, Boolean inverse) {
+        TextView sortText = findViewById(R.id.sort_method);
+        if(type.equals("title")) {
+            bookList.sort(Comparator.comparing(Book::getTitle));
+            sortingCode = 1;
+            sortText.setText("Sorted by title");
+        }
+        else {
+            bookList.sort(Comparator.comparing(Book::getAuthor));
+            sortingCode = 2;
+            sortText.setText("Sorted by author");
+        }
+        if(inverse) {
+            Collections.reverse(bookList);
+            sortingCode += 2 ;
+            sortText.setText(sortText.getText().toString() + " (asc.)");
+        }
+        else {
+            sortText.setText(sortText.getText().toString() + " (desc.)");
+        }
+        bookAdapter.setBookDataSet(bookList);
+        bookAdapter.notifyDataSetChanged();
+    }
+
+    /**
+     * Re-sorts the book list depending on the current sorting method selected after an action updates
+     * the RecyclerView dataset.
+     */
+    private void restoreInstanceSort() {
+        switch(sortingCode) {
+            case 1: sortBooks("title", false); break;
+            case 2: sortBooks("author", false); break;
+            case 3: sortBooks("title", true); break;
+            case 4: sortBooks("author", true); break;
+        }
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -201,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
         long res = db.addBook(book.getISBN(), book.getTitle(), book.getAuthor(), book.getCover());
         if(res != -1) {
             updateRecyclerView();
+            restoreInstanceSort();
             Toast.makeText(getApplicationContext(), "Book added.", Toast.LENGTH_LONG).show();
         }
         else {
@@ -214,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
     public void deleteBookFromDB(String ISBN) {
         db.deleteBook(ISBN);
         updateRecyclerView();
+        restoreInstanceSort();
         Toast.makeText(getApplicationContext(), "Book deleted.", Toast.LENGTH_LONG).show();
     }
 
@@ -224,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
     public void updateBookFromDB(Book book) {
         db.updateBook(book.getTitle(), book.getAuthor(), book.getISBN());
         updateRecyclerView();
+        restoreInstanceSort();
         Toast.makeText(getApplicationContext(), "Book updated.", Toast.LENGTH_LONG).show();
     }
 
